@@ -1,6 +1,13 @@
 from datetime import date
+from operator import methodcaller
+from os import error
 
-from flask import Flask, request, abort, jsonify
+from flask import (
+    Flask,
+    request,
+    abort,
+    jsonify
+)
 from flask_cors import CORS
 from auth import requires_auth, AuthError
 
@@ -21,6 +28,10 @@ def create_app(test_config=None):
         response.headers.add('Access-Control-Allow-Methods',
                              'GET,PATCH,POST,DELETE,OPTIONS')
         return response
+
+    @app.route('/', methods=['GET'])
+    def index():
+        return jsonify({'message': 'Welcome to capstone project'})
 
     @app.route('/actors', methods=['GET'])
     @requires_auth('get:actors')
@@ -58,13 +69,17 @@ def create_app(test_config=None):
         try:
             deleted_actor = Actor.query.filter(
                 Actor.id == actor_id).one_or_none()
+
+            if deleted_actor is None:
+                abort(404)
+
             deleted_actor.delete()
 
             return jsonify({
                 'success': True,
                 'deleted': actor_id
             })
-        except:
+        except Exception:
             abort(404)
 
     @app.route('/movies/<int:movie_id>', methods=['DELETE'])
@@ -73,13 +88,17 @@ def create_app(test_config=None):
         try:
             deleted_movie = Movie.query.filter(
                 Movie.id == movie_id).one_or_none()
+
+            if deleted_movie is None:
+                abort(404)
+
             deleted_movie.delete()
 
             return jsonify({
                 'success': True,
                 'deleted': movie_id
             })
-        except:
+        except Exception:
             abort(404)
 
     @app.route('/actors', methods=['POST'])
@@ -111,8 +130,9 @@ def create_app(test_config=None):
         if 'title' not in body or 'release_date' not in body:
             abort(400)
 
-        created_movie = Movie(title=body['title'],
-                              release_date=date.fromisoformat(body['release_date']))
+        created_movie = Movie(
+            title=body['title'],
+            release_date=date.fromisoformat(body['release_date']))
         created_movie.insert()
 
         return jsonify({
@@ -171,7 +191,8 @@ def create_app(test_config=None):
 
         updated_release_date = body.get('release_date', None)
         if updated_release_date:
-            updated_movie.release_date = date.fromisoformat(updated_release_date)
+            updated_movie.release_date = date.fromisoformat(
+                updated_release_date)
 
         updated_movie.update()
         return jsonify({
@@ -216,7 +237,7 @@ def create_app(test_config=None):
     return app
 
 
-APP = create_app()
+app = create_app()
 
 if __name__ == '__main__':
-    APP.run(host='0.0.0.0', port=8080, debug=True)
+    app.run(host='0.0.0.0', port=8080, debug=True)

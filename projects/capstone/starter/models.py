@@ -4,10 +4,14 @@ from sqlalchemy import Column, Integer, String, Date, Enum
 from flask_sqlalchemy import SQLAlchemy
 from datetime import date
 
-database_filename = "database.db"
+database_name = "capstone"
 project_dir = os.path.dirname(os.path.abspath(__file__))
-database_path = "sqlite:///{}".format(
-    os.path.join(project_dir, database_filename))
+database_path = os.environ.get(
+    'DATABASE_URL', "postgresql://postgres:123456@{}/{}"
+    .format('localhost:5432', database_name))
+
+if database_path.startswith("postgres://"):
+    database_path = database_path.replace("postgres://", "postgresql://", 1)
 
 db = SQLAlchemy()
 
@@ -23,6 +27,7 @@ def setup_db(app):
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
     db.app = app
     db.init_app(app)
+    db.create_all()
 
 
 class Gender(enum.Enum):
